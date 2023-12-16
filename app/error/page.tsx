@@ -7,7 +7,7 @@ import React from "react";
 const ErrorPage = async () => {
   const session = await getServerSession(authOptions);
 
-  if (session?.user) redirect("/");
+  if (session?.user) redirect("/home");
   
   return (
     <main className="w-full min-h-screen flex justify-center items-center flex-col gap-4">

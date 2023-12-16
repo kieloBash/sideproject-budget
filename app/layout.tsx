@@ -22,7 +22,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={poppins.className}>
+      <body
+        className={`${poppins.className} w-screen min-h-screen flex bg-main-50`}
+      >
         <AuthProvider>
           <QueryProvider>
             <Toaster /> {children}
