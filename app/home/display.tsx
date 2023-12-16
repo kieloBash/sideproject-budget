@@ -50,7 +50,7 @@ export function DisplayHome() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Haven't paid yet today of balance Php 100</CardTitle>
+        <CardTitle>{`Haven't paid yet today of balance Php 100`}</CardTitle>
         <CardDescription>{dayjs().format("MMMM DD")}</CardDescription>
       </CardHeader>
       <CardContent>
