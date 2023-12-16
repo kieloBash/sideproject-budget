@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import React from "react";
 import { ProfileAvatar } from "@/components/global/profile";
 import HomeComponent from "@/components/page/home/component";
+import { ListModal } from "@/components/page/home/modal/list";
 
 const HomePage = async () => {
   const session = await getServerSession(authOptions);
@@ -18,7 +19,8 @@ const HomePage = async () => {
         />
       </div>
       <HomeComponent />
-      <div className="w-full flex justify-end items-center">
+      <div className="w-full flex justify-between items-center">
+        <ListModal />
         <SignOutBtn />
       </div>
     </main>
