@@ -5,9 +5,12 @@ import { Button } from "@/components/ui/button";
 import { addSavingsRecordByEmail } from "@/lib/actions/temp";
 import { LogOut, Plus } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function HomePage() {
   const session = useSession();
+  const { toast } = useToast();
+
   console.log(session);
 
   async function handleAddSavings() {
@@ -20,7 +23,9 @@ export default function HomePage() {
       metGoal: true,
       date: new Date(),
     });
-    console.log(res);
+    toast({
+      title: "Added Savings",
+    });
     // alert()
   }
 
@@ -33,7 +38,11 @@ export default function HomePage() {
         </>
       ) : (
         <>
-          <Button type="button" className="w-36 py-6" onClick={handleAddSavings}>
+          <Button
+            type="button"
+            className="w-36 py-6"
+            onClick={handleAddSavings}
+          >
             <Plus className="mr-2" />
             Add Record
           </Button>
