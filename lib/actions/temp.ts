@@ -68,3 +68,83 @@ export async function addSavingsRecordByEmail({
     await prisma.$disconnect();
   }
 }
+
+export async function fetchSavingsByUserId(email: string) {
+  try {
+    if (email === "") return null;
+
+    const user = await prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
+
+    if (!user) {
+      throw new Error(`User with email ${email} not found.`);
+    }
+
+    const savingsRecords = await prisma.savingsRecord.findMany({
+      where: {
+        userId: user.id,
+      },
+    });
+
+    return savingsRecords;
+  } catch (error: any) {
+    throw new Error(`Error fetching savings records: ${error.message}`);
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+export async function checkIfPaid(email: string) {
+  try {
+    if (email === "") return null;
+
+    const user = await prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
+
+    if (!user) {
+      throw new Error(`User with email ${email} not found.`);
+    }
+
+    // Get the start and end of the current day
+    const today = new Date();
+    const startOfDay = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate(),
+      0,
+      0,
+      0
+    );
+    const endOfDay = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate(),
+      23,
+      59,
+      59
+    );
+
+    const savingsRecords = await prisma.savingsRecord.findFirst({
+      where: {
+        userId: user.id,
+        date: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+      },
+    });
+    console.log(savingsRecords);
+
+    return savingsRecords ? true : false;
+  } catch (error: any) {
+    throw new Error(`Error fetching savings records: ${error.message}`);
+  } finally {
+    await prisma.$disconnect();
+  }
+}
