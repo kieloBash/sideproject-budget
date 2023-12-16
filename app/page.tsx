@@ -1,7 +1,9 @@
 "use client";
 
 import SignInBtn from "@/components/global/signin-button";
+import { Button } from "@/components/ui/button";
 import { addSavingsRecordByEmail } from "@/lib/actions/temp";
+import { LogOut, Plus } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 
 export default function HomePage() {
@@ -24,18 +26,20 @@ export default function HomePage() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-8 p-24">
-      <SignInBtn />
-
       {session.status !== "authenticated" ? (
-        <p>Not signed in</p>
+        <>
+          <SignInBtn />
+          <p>Not signed in</p>
+        </>
       ) : (
         <>
-          <button type="button" onClick={handleAddSavings}>
+          <Button type="button" className="w-36 py-6" onClick={handleAddSavings}>
+            <Plus className="mr-2" />
             Add Record
-          </button>
-          <button type="button" onClick={() => signOut()}>
-            Sign Out
-          </button>
+          </Button>
+          <Button type="button" className="w-36 py-6" onClick={() => signOut()}>
+            <LogOut className="mr-2" /> Sign Out
+          </Button>
           <p>Signed in as: {session.data.user?.email}</p>
         </>
       )}
