@@ -3,6 +3,64 @@
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
+// Get the start and end of today
+const today = new Date();
+const startOfToday = new Date(
+  today.getFullYear(),
+  today.getMonth(),
+  today.getDate(),
+  0,
+  0,
+  0
+);
+const endOfToday = new Date(
+  today.getFullYear(),
+  today.getMonth(),
+  today.getDate(),
+  23,
+  59,
+  59
+);
+
+// Get the start and end of yesterday
+const yesterday = new Date();
+yesterday.setDate(today.getDate() - 1);
+const startOfYesterday = new Date(
+  yesterday.getFullYear(),
+  yesterday.getMonth(),
+  yesterday.getDate(),
+  0,
+  0,
+  0
+);
+const endOfYesterday = new Date(
+  yesterday.getFullYear(),
+  yesterday.getMonth(),
+  yesterday.getDate(),
+  23,
+  59,
+  59
+);
+
+// Get the start and end of yesterday
+const tomorrow = new Date();
+tomorrow.setDate(today.getDate() + 1);
+const startOfTomorrow = new Date(
+  tomorrow.getFullYear(),
+  tomorrow.getMonth(),
+  tomorrow.getDate(),
+  0,
+  0,
+  0
+);
+const endOfTomorrow = new Date(
+  tomorrow.getFullYear(),
+  tomorrow.getMonth(),
+  tomorrow.getDate(),
+  23,
+  59,
+  59
+);
 
 export async function addUser({
   email,
@@ -51,17 +109,21 @@ export async function addSavingsRecordByEmail({
       throw new Error(`User with email ${email} not found.`);
     }
 
-    // Add savings record for the user
-    const savingsRecord = await prisma.savingsRecord.create({
+    const existingRecord = await fetchTodayRecord(email);
+
+    if (!existingRecord) return null;
+
+    await prisma.savingsRecord.update({
+      where: {
+        id: existingRecord.id,
+      },
       data: {
-        userId: user.id,
-        date,
         savedAmount,
         metGoal,
       },
     });
 
-    return savingsRecord;
+    return existingRecord;
   } catch (error: any) {
     throw new Error(`Error adding savings record: ${error.message}`);
   } finally {
@@ -97,54 +159,118 @@ export async function fetchSavingsByUserId(email: string) {
   }
 }
 
-export async function checkIfPaid(email: string) {
-  try {
-    if (email === "") return null;
+export async function Checker(email: string) {
+  const user = await checkUser(email);
+  if (!user) return null;
 
-    const user = await prisma.user.findUnique({
+  let yesterdaySavings = await fetchYesterdayRecord(email);
+  let todaySavings = await fetchTodayRecord(email);
+
+  console.log(yesterdaySavings, todaySavings);
+
+  const newGoal =
+    yesterdaySavings && yesterdaySavings.metGoal === false
+      ? (todaySavings?.goal || 100) + 50
+      : 100;
+
+  if (
+    yesterdaySavings &&
+    yesterdaySavings.metGoal === false &&
+    todaySavings &&
+    !todaySavings.addedPenalty
+  ) {
+    console.log("Yesterday not met, so add 50");
+    todaySavings = await prisma.savingsRecord.update({
       where: {
-        email,
+        id: todaySavings.id,
+      },
+      data: {
+        goal: newGoal,
+        addedPenalty: true,
       },
     });
-
-    if (!user) {
-      throw new Error(`User with email ${email} not found.`);
-    }
-
-    // Get the start and end of the current day
-    const today = new Date();
-    const startOfDay = new Date(
-      today.getFullYear(),
-      today.getMonth(),
-      today.getDate(),
-      0,
-      0,
-      0
-    );
-    const endOfDay = new Date(
-      today.getFullYear(),
-      today.getMonth(),
-      today.getDate(),
-      23,
-      59,
-      59
-    );
-
-    const savingsRecords = await prisma.savingsRecord.findFirst({
-      where: {
-        userId: user.id,
-        date: {
-          gte: startOfDay,
-          lte: endOfDay,
-        },
-      },
-    });
-    console.log(savingsRecords);
-
-    return savingsRecords ? true : false;
-  } catch (error: any) {
-    throw new Error(`Error fetching savings records: ${error.message}`);
-  } finally {
-    await prisma.$disconnect();
   }
+
+  return todaySavings;
+}
+
+// IN HERE
+async function fetchYesterdayRecord(email: string) {
+  const user = await checkUser(email);
+  if (!user) return null;
+
+  let saving;
+  saving = await prisma.savingsRecord.findFirst({
+    where: {
+      userId: user.id,
+      date: {
+        gte: startOfYesterday,
+        lte: endOfYesterday,
+      },
+    },
+    orderBy: {
+      date: "desc",
+    },
+  });
+
+  if (!saving) {
+    saving = await prisma.savingsRecord.create({
+      data: {
+        userId: user.id,
+        date: yesterday,
+        savedAmount: 0,
+        metGoal: false,
+        goal: 100,
+      },
+    });
+  }
+
+  return saving;
+}
+async function fetchTodayRecord(email: string) {
+  const user = await checkUser(email);
+  if (!user) return null;
+
+  let saving;
+  saving = await prisma.savingsRecord.findFirst({
+    where: {
+      userId: user.id,
+      date: {
+        gte: startOfToday,
+        lte: endOfToday,
+      },
+    },
+    orderBy: {
+      date: "desc",
+    },
+  });
+
+  if (!saving) {
+    saving = await prisma.savingsRecord.create({
+      data: {
+        userId: user.id,
+        date: today,
+        savedAmount: 0,
+        metGoal: false,
+        goal: 100,
+      },
+    });
+  }
+
+  return saving;
+}
+async function checkUser(email: string) {
+  if (email === "") return null;
+
+  const user = await prisma.user.findUnique({
+    where: {
+      email,
+    },
+  });
+
+  if (!user) {
+    throw new Error(`User with email ${email} not found.`);
+  }
+
+  return user;
 }

@@ -18,7 +18,9 @@ model SavingsRecord {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   userId          String   @db.ObjectId
   user            User     @relation(fields: [userId], references: [id])
-  date            DateTime
-  savedAmount     Int
-  metGoal         Boolean
+  date            DateTime 
+  savedAmount     Int      @default(0)
+  goal            Int      @default(100)
+  addedPenalty    Boolean?  @default(false)
+  metGoal         Boolean  @default(false)
 }
